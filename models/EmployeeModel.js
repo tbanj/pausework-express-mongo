@@ -15,8 +15,13 @@ const EmployeeSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  isadmin: {
+    type: Boolean,
+    
+  },
   age: {
     type: Number,
+    required: true,
   },
   gender: {
     type: String,

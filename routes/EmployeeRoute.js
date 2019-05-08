@@ -45,8 +45,11 @@ router.get('/profile', AuthMiddleware, async function(req, res) {
   try {
     //@ts-ignore
     const employee = await EmployeeModel.findById(req.user);
+    const result = employee.toJSON();
+    
+    delete result.password;
 
-    res.json({ status: 'success', data: employee });
+    res.json({ status: 'success', data: result });
   } catch (err) {
     console.log(err);
 
@@ -71,6 +74,10 @@ router.post('/signin', async function(req, res) {
       req.body.password,
       employee.password
     );
+    
+    const result = employee.toJSON();
+    
+    delete result.password;
 
     if (!isPasswordValid)
       return res
@@ -78,20 +85,21 @@ router.post('/signin', async function(req, res) {
         .json({ status: 'error', message: 'Invalid login details' });
 
     const token = jwt.sign({ id: employee.id }, env.jwt_secret);
-    res.json({ status: 'success', data: { token } });
+    res.json({ status: 'success', data: { token, result } });
   } catch (err) {
     res.status(500).json({ status: 'error', message: 'An error occured' });
   }
 });
 
 // Update a employee
-router.put('/:email', async function(req, res) {
+router.put('/:email', AuthMiddleware, async function(req, res) {
   try {
     const updatedEmployee = await EmployeeModel.findOneAndUpdate(
       { email: req.params.email },
       req.body,
       { new: true }
     );
+
 
     // Check if the employee was found and updated
     if (!updatedEmployee) {
@@ -116,7 +124,7 @@ router.put('/:email', async function(req, res) {
 });
 
 // Delete a employee
-router.delete('/:email', async function(req, res) {
+router.delete('/:email', AuthMiddleware, async function(req, res) {
   try {
     const deletedEmployee = await EmployeeModel.findOneAndDelete({
       email: req.params.email,
@@ -144,7 +152,7 @@ router.delete('/:email', async function(req, res) {
 });
 
 // Get a employee by email
-router.get('/:email', async function(req, res) {
+router.get('/:email', AuthMiddleware,async function(req, res) {
   try {
     const employee = await EmployeeModel.findOne({ email: req.params.email });
 
@@ -172,7 +180,7 @@ router.get('/:email', async function(req, res) {
 });
 
 // Get all employees
-router.get('', async function(req, res) {
+router.get('', AuthMiddleware, async function(req, res) {
   try {
     const search = req.query.gender ? { gender: req.query.gender } : {};
 

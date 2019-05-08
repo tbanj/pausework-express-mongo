@@ -3,10 +3,11 @@ const joi = require('joi');
 /**
  * Joi Validation schema for validating requests  for leaves.
  */
-exports.CreateArticleValidator = {
+exports.CreateLeaveValidator = {
   leavetype: joi.string().required(),
-  startdatefrom: joi.date().required(),
-  enddateto: joi.date().required(),
+  approvedby: joi.string().required(),
+  startdate: joi.date().required(),
+  enddate: joi.date().required(),
   offdays: joi.number().required(),
   approvestatus: joi.number().required(),
   approvemessage: joi.string().required(),

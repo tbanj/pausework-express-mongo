@@ -5,23 +5,23 @@ const LeaveSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  startdatefrom: {
+  
+  startdate: {
     type: Date,
     required: true,
   },
   
-  enddateto: {
+  enddate: {
     type: Date,
     required: true,
   },
   createddate: {
     type: Date,
-    default: Date.now,
+    
   },
 
   offdays: {
     type: Number,
-    required: true,
   },
   
 
@@ -39,7 +39,11 @@ const LeaveSchema = new mongoose.Schema({
 
   approvemessage: {
     type: String,
+    required: true,
     
+  },
+  approvedby: {
+    type: String,
     
   },
   employee: {
@@ -47,10 +51,7 @@ const LeaveSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  is_public: {
-    type: Boolean,
-    default: false,
-  },
+  
 });
 
 const LeaveModel = mongoose.model('Leave', LeaveSchema);
