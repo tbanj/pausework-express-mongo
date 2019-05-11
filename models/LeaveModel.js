@@ -17,7 +17,6 @@ const LeaveSchema = new mongoose.Schema({
   },
   createddate: {
     type: Date,
-    
   },
 
   offdays: {

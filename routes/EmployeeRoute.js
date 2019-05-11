@@ -3,12 +3,46 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const EmployeeModel = require('../models/EmployeeModel');
 const AuthMiddleware = require('../middlewares/auth');
+const adminKey = 'LevelUp'
 const env = require('../env');
 
 const router = express.Router();
 
 // Sign up a employee
 router.post('/', async function(req, res) {
+  try {
+    req.body.password = await bcrypt.hash(req.body.password, 10);
+    console.log('hello');
+    
+    const employee = await EmployeeModel.create(req.body);
+    console.log(employee)
+    console.log(env.jwt_secret);
+    const result = employee.toJSON();
+    
+    delete result.password;
+
+    const token = jwt.sign({ id: employee.id }, env.jwt_secret, {
+      expiresIn: '1h',
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: { employee: result, token },
+    });
+  } catch (err) {
+    console.log(err);
+
+
+
+    res.status(500).json({
+      status: 'error',
+      message: 'An error occured while creating your account 😭',
+    });
+  }
+});
+
+// admin signup
+router.post('/', AuthMiddleware,async function(req, res) {
   try {
     req.body.password = await bcrypt.hash(req.body.password, 10);
     console.log('hello');
