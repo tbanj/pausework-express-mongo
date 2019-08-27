@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const env = require('../env');
 
 /**
  * Mongoose Employee schema which is a description/blueprint of how we want our data to look like
@@ -7,17 +8,28 @@ const EmployeeSchema = new mongoose.Schema({
   employee_id: {
     type: String,
   },
+  pix: {
+    type: String,
+    get: v => `${env.mongodb_url}${v}`,
+    default: "https://res.cloudinary.com/dr9bbyvab/v1566495925/Krystal/user-unisex-512.png"
+  },
   first_name: {
     type: String,
     required: true,
+
   },
   last_name: {
     type: String,
     required: true,
   },
-  isadmin: {
+  is_admin: {
     type: Boolean,
-    
+  },
+  admin_key: {
+    type: String,
+  },
+  created_date: {
+    type: Date,
   },
   age: {
     type: Number,
@@ -37,7 +49,7 @@ const EmployeeSchema = new mongoose.Schema({
 
   timezone: {
     type: String,
-    enum: ['West Africa/Lagos', 'Europe/London','America/California'],
+    enum: ['West Africa/Lagos', 'Europe/London', 'America/California'],
     required: true,
   },
   email: {
@@ -51,6 +63,17 @@ const EmployeeSchema = new mongoose.Schema({
     required: true,
     select: false,
   },
+  position: {
+    type: String,
+    required: true,
+    default: null
+  },
+
+  department: {
+    type: String,
+    required: true,
+    default: null
+  }
 });
 
 // Model which provides us with an interface for interacting with our data

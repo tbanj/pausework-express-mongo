@@ -3,65 +3,82 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const EmployeeModel = require('../models/EmployeeModel');
 const AuthMiddleware = require('../middlewares/auth');
-const adminKey = 'LevelUp'
+const JoiValidator = require('../middlewares/validator');
+const { CreateEmployeeValidator } = require('../validators/EmployeeValidator');
+
 const env = require('../env');
 
 const router = express.Router();
 
-// Sign up a employee
-router.post('/', async function(req, res) {
-  try {
-    req.body.password = await bcrypt.hash(req.body.password, 10);
-    console.log('hello');
-    
-    const employee = await EmployeeModel.create(req.body);
-    console.log(employee)
-    console.log(env.jwt_secret);
-    const result = employee.toJSON();
-    
-    delete result.password;
+// an employee signup
+router.post('/',
+  JoiValidator(CreateEmployeeValidator),
+  async function (req, res) {
+    try {
+      req.body.password = await bcrypt.hash(req.body.password, 10);
 
-    const token = jwt.sign({ id: employee.id }, env.jwt_secret, {
-      expiresIn: '1h',
-    });
+      const employee = await EmployeeModel.create({
+        ...req.body,
+        created_date: new Date(),
+        is_admin: false,
+      });
 
-    res.status(200).json({
-      status: 'success',
-      data: { employee: result, token },
-    });
-  } catch (err) {
-    console.log(err);
+      const result = employee.toJSON();
+
+      delete result.password;
+
+      const token = jwt.sign({ id: employee.id }, env.jwt_secret, {
+        expiresIn: '1h',
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: { employee: result, token },
+      });
+    } catch (err) {
+      console.log(err);
 
 
 
-    res.status(500).json({
-      status: 'error',
-      message: 'An error occured while creating your account 😭',
-    });
-  }
-});
+      res.status(500).json({
+        status: 'error',
+        message: 'An error occured while creating your account 😭',
+      });
+    }
+  });
+
 
 // admin signup
-router.post('/', AuthMiddleware,async function(req, res) {
+router.post('/admin', async function (req, res) {
   try {
-    req.body.password = await bcrypt.hash(req.body.password, 10);
-    console.log('hello');
-    
-    const employee = await EmployeeModel.create(req.body);
-    console.log(employee)
-    console.log(env.jwt_secret);
-    const result = employee.toJSON();
-    
-    delete result.password;
+    if (req.body.admin_key) {
+      if (req.body.admin_key !== env.admin_key) {
+        res.status(404).json({ status: 'error', message: 'you are not an admin' })
+        return;
+      }
 
-    const token = jwt.sign({ id: employee.id }, env.jwt_secret, {
-      expiresIn: '1h',
-    });
+      req.body.password = await bcrypt.hash(req.body.password, 10);
 
-    res.status(200).json({
-      status: 'success',
-      data: { employee: result, token },
-    });
+      const employee = await EmployeeModel.create({
+        ...req.body,
+        created_date: new Date(),
+        is_admin: true,
+      });
+
+      const result = employee.toJSON();
+
+      delete result.password;
+
+      const token = jwt.sign({ id: employee.id }, env.jwt_secret, {
+        expiresIn: '1h',
+      });
+
+      res.status(200).json({
+        status: 'success',
+        data: { employee: result, token },
+      });
+
+    }
   } catch (err) {
     console.log(err);
 
@@ -74,13 +91,14 @@ router.post('/', AuthMiddleware,async function(req, res) {
   }
 });
 
+
 // Get's a employee's profile
-router.get('/profile', AuthMiddleware, async function(req, res) {
+router.get('/profile', AuthMiddleware, async function (req, res) {
   try {
     //@ts-ignore
     const employee = await EmployeeModel.findById(req.user);
     const result = employee.toJSON();
-    
+
     delete result.password;
 
     res.json({ status: 'success', data: result });
@@ -91,9 +109,10 @@ router.get('/profile', AuthMiddleware, async function(req, res) {
   }
 });
 
-// Login a employee
-router.post('/signin', async function(req, res) {
+// Login an employee
+router.post('/signin', async function (req, res) {
   try {
+
     const employee = await EmployeeModel.findOne(
       { email: req.body.email },
       '+password'
@@ -108,9 +127,9 @@ router.post('/signin', async function(req, res) {
       req.body.password,
       employee.password
     );
-    
+
     const result = employee.toJSON();
-    
+
     delete result.password;
 
     if (!isPasswordValid)
@@ -119,14 +138,24 @@ router.post('/signin', async function(req, res) {
         .json({ status: 'error', message: 'Invalid login details' });
 
     const token = jwt.sign({ id: employee.id }, env.jwt_secret);
-    res.json({ status: 'success', data: { token, result } });
+
+    // user login
+    if (result.admin_key === null || result.admin_key === undefined) {
+      const urlTo = "dashboard";
+      res.json({ status: 'success', data: { token, urlTo, result } });
+      return;
+    }
+
+    // admin login
+    const urlTo = "admin-dashboard";
+    res.json({ status: 'success', data: { token, urlTo, result } });
   } catch (err) {
     res.status(500).json({ status: 'error', message: 'An error occured' });
   }
 });
 
 // Update a employee
-router.put('/:email', AuthMiddleware, async function(req, res) {
+router.put('/:email', AuthMiddleware, async function (req, res) {
   try {
     const updatedEmployee = await EmployeeModel.findOneAndUpdate(
       { email: req.params.email },
@@ -158,7 +187,7 @@ router.put('/:email', AuthMiddleware, async function(req, res) {
 });
 
 // Delete a employee
-router.delete('/:email', AuthMiddleware, async function(req, res) {
+router.delete('/:email', AuthMiddleware, async function (req, res) {
   try {
     const deletedEmployee = await EmployeeModel.findOneAndDelete({
       email: req.params.email,
@@ -186,7 +215,7 @@ router.delete('/:email', AuthMiddleware, async function(req, res) {
 });
 
 // Get a employee by email
-router.get('/:email', AuthMiddleware,async function(req, res) {
+router.get('/:email', AuthMiddleware, async function (req, res) {
   try {
     const employee = await EmployeeModel.findOne({ email: req.params.email });
 
@@ -214,7 +243,7 @@ router.get('/:email', AuthMiddleware,async function(req, res) {
 });
 
 // Get all employees
-router.get('', AuthMiddleware, async function(req, res) {
+router.get('', AuthMiddleware, async function (req, res) {
   try {
     const search = req.query.gender ? { gender: req.query.gender } : {};
 

@@ -4,6 +4,8 @@ const cors = require('cors');
 const dotenv = require('dotenv').config();
 const EmployeeRoute = require('./routes/EmployeeRoute');
 const LeaveRoute = require('./routes/LeaveRoute');
+const LeaveRequestReplyRoute = require('./routes/LeaveRequestReplyRoute');
+const LeaveRequestSharedRoute = require('./routes/LeaveRequestSharedRoute');
 const env = require('./env');
 
 const app = express();
@@ -15,7 +17,7 @@ mongoose
     console.log('🚌 Successfully connected to MongoDB');
   })
   .catch(err => {
-    console.log('An error occured while conencting to MongoDB', err);
+    console.log('🔥 😠 An error occured while conencting to MongoDB', err);
   });
 
 app.use(cors());
@@ -36,6 +38,10 @@ app.use(express.json());
 app.use('/employee', EmployeeRoute);
 
 app.use('/leave', LeaveRoute);
+
+app.use('/request_reply', LeaveRequestReplyRoute);
+
+app.use('/request_shared', LeaveRequestSharedRoute);
 
 app.listen(env.port).on('listening', () => {
   console.log('🚀 We are live on ' + env.port);

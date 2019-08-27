@@ -1,56 +1,59 @@
 const mongoose = require('mongoose');
 
 const LeaveSchema = new mongoose.Schema({
-  leavetype: {
+  leave_type: {
     type: String,
     required: true,
   },
-  
-  startdate: {
+
+  start_date: {
     type: Date,
     required: true,
   },
-  
-  enddate: {
+
+  end_date: {
     type: Date,
     required: true,
   },
-  createddate: {
+  created_date: {
     type: Date,
   },
 
-  offdays: {
+  off_days: {
     type: Number,
   },
-  
 
-  leavemessage: {
+  leave_message: {
     type: String,
     required: true,
   },
 
-  
-  approvestatus: {
+
+  approve_status: {
     type: Number,
     required: true,
-    
   },
 
-  approvemessage: {
+  approve_message: {
     type: String,
     required: true,
-    
+
   },
-  approvedby: {
+  approved_by: {
     type: String,
-    
+
   },
   employee: {
     // The leave employee's ID
     type: String,
     required: true,
   },
-  
+
+  admin_key: {
+    // The leave employee's ID
+    type: String,
+  },
+
 });
 
 const LeaveModel = mongoose.model('Leave', LeaveSchema);
