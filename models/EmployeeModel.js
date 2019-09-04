@@ -33,24 +33,27 @@ const EmployeeSchema = new mongoose.Schema({
   },
   age: {
     type: Number,
-    required: true,
+    default: null
+
   },
   gender: {
     type: String,
     enum: ['male', 'female'],
-    required: true,
+    default: 'male'
   },
 
   country: {
     type: String,
     enum: ['Nigeria', 'Ghana'],
     required: true,
+    default: 'Nigeria'
   },
 
   timezone: {
     type: String,
     enum: ['West Africa/Lagos', 'Europe/London', 'America/California'],
     required: true,
+    default: 'West Africa/Lagos'
   },
   email: {
     type: String,
@@ -65,13 +68,11 @@ const EmployeeSchema = new mongoose.Schema({
   },
   position: {
     type: String,
-    required: true,
     default: null
   },
 
   department: {
     type: String,
-    required: true,
     default: null
   }
 });

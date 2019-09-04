@@ -4,6 +4,7 @@ const bcrypt = require('bcrypt');
 const EmployeeModel = require('../models/EmployeeModel');
 const AuthMiddleware = require('../middlewares/auth');
 const JoiValidator = require('../middlewares/validator');
+const { CreateEmployeeAdminValidator } = require('../validators/EmployeeAdminValidator');
 const { CreateEmployeeValidator } = require('../validators/EmployeeValidator');
 
 const env = require('../env');
@@ -16,7 +17,6 @@ router.post('/',
   async function (req, res) {
     try {
       req.body.password = await bcrypt.hash(req.body.password, 10);
-
       const employee = await EmployeeModel.create({
         ...req.body,
         created_date: new Date(),
@@ -24,9 +24,7 @@ router.post('/',
       });
 
       const result = employee.toJSON();
-
       delete result.password;
-
       const token = jwt.sign({ id: employee.id }, env.jwt_secret, {
         expiresIn: '1h',
       });
@@ -37,9 +35,6 @@ router.post('/',
       });
     } catch (err) {
       console.log(err);
-
-
-
       res.status(500).json({
         status: 'error',
         message: 'An error occured while creating your account 😭',
@@ -49,47 +44,40 @@ router.post('/',
 
 
 // admin signup
-router.post('/admin', async function (req, res) {
-  try {
-    if (req.body.admin_key) {
+router.post('/admin',
+  JoiValidator(CreateEmployeeAdminValidator),
+  async function (req, res) {
+    try {
       if (req.body.admin_key !== env.admin_key) {
-        res.status(404).json({ status: 'error', message: 'you are not an admin' })
-        return;
+        return res.status(400).send("Invalid Admin key.");
       }
 
-      req.body.password = await bcrypt.hash(req.body.password, 10);
+      const user = await EmployeeModel.findOne({ email: req.body.email });
+      if (user) return res.status(400).send("email already registered.");
 
+      req.body.password = await bcrypt.hash(req.body.password, 10);
       const employee = await EmployeeModel.create({
         ...req.body,
         created_date: new Date(),
         is_admin: true,
       });
-
       const result = employee.toJSON();
-
       delete result.password;
-
       const token = jwt.sign({ id: employee.id }, env.jwt_secret, {
         expiresIn: '1h',
       });
-
       res.status(200).json({
         status: 'success',
         data: { employee: result, token },
       });
-
+    } catch (err) {
+      console.log(err);
+      res.status(500).json({
+        status: 'error',
+        message: 'An error occured while creating your account 😭',
+      });
     }
-  } catch (err) {
-    console.log(err);
-
-
-
-    res.status(500).json({
-      status: 'error',
-      message: 'An error occured while creating your account 😭',
-    });
-  }
-});
+  });
 
 
 // Get's a employee's profile
@@ -98,7 +86,6 @@ router.get('/profile', AuthMiddleware, async function (req, res) {
     //@ts-ignore
     const employee = await EmployeeModel.findById(req.user);
     const result = employee.toJSON();
-
     delete result.password;
 
     res.json({ status: 'success', data: result });
@@ -109,50 +96,66 @@ router.get('/profile', AuthMiddleware, async function (req, res) {
   }
 });
 
-// Login an employee
+
+router.get('/query-employee', async function (req, res) {
+  try {
+    //@ts-ignore
+    const employee = await EmployeeModel.findById(req.query.employee
+    );
+    const result = employee.toJSON();
+
+    if (employee) {
+      res.status(201).send({
+        data: {
+          'first_name': result.first_name,
+          'last_name': result.last_name,
+        }
+      });
+    }
+
+  } catch (err) {
+    console.log(err);
+
+    res.status(401).json({ status: 'error', message: 'invalid data' });
+  }
+});
+
+
+
+// Login as admin employee or just an employee
 router.post('/signin', async function (req, res) {
   try {
-
     const employee = await EmployeeModel.findOne(
       { email: req.body.email },
       '+password'
     );
 
     if (!employee)
-      return res
-        .status(401)
-        .json({ status: 'error', message: 'Invalid login details' });
-
+      return res.status(400).send("Invalid login details.");
     const isPasswordValid = await bcrypt.compare(
       req.body.password,
       employee.password
     );
-
     const result = employee.toJSON();
-
     delete result.password;
 
     if (!isPasswordValid)
-      return res
-        .status(401)
-        .json({ status: 'error', message: 'Invalid login details' });
-
+      return res.status(400).send("Invalid login details.");
     const token = jwt.sign({ id: employee.id }, env.jwt_secret);
-
-    // user login
-    if (result.admin_key === null || result.admin_key === undefined) {
-      const urlTo = "dashboard";
-      res.json({ status: 'success', data: { token, urlTo, result } });
-      return;
+    let urlTo;
+    if (employee.is_admin === false) {
+      urlTo = "dashboard";
     }
-
-    // admin login
-    const urlTo = "admin-dashboard";
-    res.json({ status: 'success', data: { token, urlTo, result } });
+    else {
+      urlTo = "admin-dashboard";
+    }
+    res.status(201).json({ status: 'success', data: { token, urlTo, result } });
   } catch (err) {
     res.status(500).json({ status: 'error', message: 'An error occured' });
   }
 });
+
+
 
 // Update a employee
 router.put('/:email', AuthMiddleware, async function (req, res) {

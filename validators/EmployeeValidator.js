@@ -16,9 +16,7 @@ exports.CreateEmployeeValidator = {
   age: joi.number().required(),
   admin_key: joi.string().default(),
   pix: joi.string().default(),
-  position: joi.string().required(),
-  department: joi.string().required()
-
-
+  position: joi.string().default(),
+  department: joi.string().default(),
 
 };

@@ -6,6 +6,8 @@ const EmployeeRoute = require('./routes/EmployeeRoute');
 const LeaveRoute = require('./routes/LeaveRoute');
 const LeaveRequestReplyRoute = require('./routes/LeaveRequestReplyRoute');
 const LeaveRequestSharedRoute = require('./routes/LeaveRequestSharedRoute');
+const CountryRoute = require('./routes/CountryRoute');
+const GenderRoute = require('./routes/GenderRoute');
 const env = require('./env');
 
 const app = express();
@@ -42,6 +44,8 @@ app.use('/leave', LeaveRoute);
 app.use('/request_reply', LeaveRequestReplyRoute);
 
 app.use('/request_shared', LeaveRequestSharedRoute);
+app.use('/country', CountryRoute);
+app.use('/gender', GenderRoute);
 
 app.listen(env.port).on('listening', () => {
   console.log('🚀 We are live on ' + env.port);
