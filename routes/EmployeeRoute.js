@@ -26,7 +26,7 @@ router.post('/',
       const result = employee.toJSON();
       delete result.password;
       const token = jwt.sign({ id: employee.id }, env.jwt_secret, {
-        expiresIn: '1h',
+        expiresIn: '50s',
       });
 
       res.status(200).json({
